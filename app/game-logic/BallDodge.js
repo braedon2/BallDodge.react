@@ -149,7 +149,7 @@ class Vector {
 }
 
 
-class State {
+export class State {
     constructor(actors, status) {
         this.actors = actors;
         this.status = status;
