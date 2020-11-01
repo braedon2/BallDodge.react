@@ -2,12 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { State } from './game-logic/BallDodge';
 
-const WIDTH = 400;
-const HEIGHT = 600;
-const zoneHeight = 50;
+import './index.css';
 
 const Game = () => {
     const [state, setState] = useState(State.random(10));
+    const [viewPort, setViewPort] = useState(null);
+
+    useEffect(() => {
+        setViewPort({
+            height: window.innerHeight,
+            width: window.innerWidth
+        })
+    }, []);
 
     useEffect(() => {
         let lastTime = null;
@@ -30,12 +36,17 @@ const Game = () => {
         color: a.color
     }));
 
+    // don't render the game until the view port dimensions are known
+    if (!viewPort) {
+        return null;
+    }
+
     return (
         <GameStateDisplay 
-            width={WIDTH} 
-            height={HEIGHT} 
+            width={viewPort.width} 
+            height={viewPort.height} 
             actors={drawableActors} />
-    )
+    );
 }
 
 const GameStateDisplay = ({width, height, actors }) => {
@@ -53,26 +64,7 @@ const GameStateDisplay = ({width, height, actors }) => {
             // clear the canvas
             cx.fillStyle = "white";
             cx.fillRect(0, 0, width, height);
-            
-            // draw end zone
-            cx.fillStyle = "red";
-            cx.fillRect(0, 0, width, zoneHeight);
-
-            // draw start zone
-            cx.fillStyle = "green";
-            cx.fillRect(
-                0,
-                height - zoneHeight, 
-                width,
-                zoneHeight
-            );
-
-            //draw global playing area
-            cx.strokeStyle = "black";
-            cx.lineWidth = 4;
-            cx.strokeRect(0, 0, width, height);
-            
-            
+        
             for (let {pos, radius, color} of actors) {
                 cx.beginPath();
                 cx.fillStyle = color;
