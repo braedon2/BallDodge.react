@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { State } from './game-logic/BallDodge';
 
-const width = 400;
-const height = 600;
+const WIDTH = 400;
+const HEIGHT = 600;
 const zoneHeight = 50;
 
 const Game = () => {
@@ -24,12 +24,21 @@ const Game = () => {
         requestAnimationFrame(frameFunc);
     }, [])
 
+    const drawableActors = state.actors.map(a => ({
+        pos: a.pos,
+        radius: a.radius,
+        color: a.color
+    }));
+
     return (
-        <GameStateDisplay state={state} />
+        <GameStateDisplay 
+            width={WIDTH} 
+            height={HEIGHT} 
+            actors={drawableActors} />
     )
 }
 
-const GameStateDisplay = ({ state }) => {
+const GameStateDisplay = ({width, height, actors }) => {
     const canvasRef = useRef();
 
     useEffect(() => {
@@ -41,41 +50,39 @@ const GameStateDisplay = ({ state }) => {
         const render = () => {
             const cx = canvasRef.current.getContext("2d");
 
-            const drawZones = () => {
-                // draw end zone
-                cx.fillStyle = "red";
-                cx.fillRect(0, 0, width, zoneHeight);
+            // clear the canvas
+            cx.fillStyle = "white";
+            cx.fillRect(0, 0, width, height);
+            
+            // draw end zone
+            cx.fillStyle = "red";
+            cx.fillRect(0, 0, width, zoneHeight);
 
-                // draw start zone
-                cx.fillStyle = "green";
-                cx.fillRect(
-                    0,
-                    height - zoneHeight, 
-                    width,
-                    zoneHeight
-                );
+            // draw start zone
+            cx.fillStyle = "green";
+            cx.fillRect(
+                0,
+                height - zoneHeight, 
+                width,
+                zoneHeight
+            );
 
-                //draw global playing area
-                cx.strokeStyle = "black";
-                cx.lineWidth = 4;
-                cx.strokeRect(0, 0, width, height);
+            //draw global playing area
+            cx.strokeStyle = "black";
+            cx.lineWidth = 4;
+            cx.strokeRect(0, 0, width, height);
+            
+            
+            for (let {pos, radius, color} of actors) {
+                cx.beginPath();
+                cx.fillStyle = color;
+                cx.arc(pos.x, pos.y, radius, 0, 7);
+                cx.fill();
             }
-
-            const drawActors = () => {
-                for (let actor of state.actors) {
-                    cx.beginPath();
-                    cx.fillStyle = actor.color;
-                    cx.arc(actor.pos.x, actor.pos.y, actor.radius, 0, 7);
-                    cx.fill();
-                }
-            }
-
-            drawZones();
-            drawActors();
         }
 
         render();
-    }, [state]);
+    }, [actors]);
 
     return (
         <canvas ref={canvasRef}></canvas>
