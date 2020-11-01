@@ -51,18 +51,18 @@ function trackKeys(keys) {
     return down;
 }
   
-function touchesBoundary(pos, radius) {
+function touchesBoundary(pos, radius, width, height) {
     let touches = false;
     let side = [];
 
     let x = pos.x;
     let y = pos.y;
 
-    if ((Math.ceil(x) + radius) > boundaries.width) 
+    if ((Math.ceil(x) + radius) > width) 
         side.push("right")
     if (Math.floor(x) - radius < 0) 
         side.push("left");
-    if (Math.ceil(y) + radius > boundaries.height) 
+    if (Math.ceil(y) + radius > height) 
         side.push("bottom");
     if (Math.floor(y) - radius < 0) 
         side.push("top");
@@ -150,9 +150,11 @@ class Vector {
 
 
 export class State {
-    constructor(actors, status) {
+    constructor(actors, status, width, height) {
         this.actors = actors;
         this.status = status;
+        this.width = width;
+        this.height = height;
     }
 
     get player() { 
@@ -186,7 +188,7 @@ export class State {
     updateNonPlayers(time) {
         let newBalls = this.nonPlayers;
         for (let i = 0; i < newBalls.length; i += 1) {
-            newBalls[i] = newBalls[i].update(time);
+            newBalls[i] = newBalls[i].update(time, this.width, this.height);
 
             let colliderIndex = newBalls.findIndex(
                 b => b != newBalls[i] && overlap(b, newBalls[i]));
@@ -200,11 +202,15 @@ export class State {
             }
         }
 
-        return new State(newBalls.concat(this.player), this.status);
+        return new State(
+            newBalls.concat(this.player), 
+            this.status, 
+            this.width, 
+            this.height);
     }
 
     updatePlayer(time, keys) {
-        let newPlayer = this.player.update(time, keys);
+        let newPlayer = this.player.update(time, keys, this.width, this.height);
 
         // check for collision with ball
         let loseCondition = this.actors.some(a => {
@@ -218,14 +224,16 @@ export class State {
         
         return new State(
             newActors.concat(newPlayer),
-            loseCondition ? statuses.LOST : this.status
+            loseCondition ? statuses.LOST : this.status,
+            this.width,
+            this.height
         );
     }
 
-    static random(numBalls) {
+    static random(numBalls, width, height) {
         let actors = [];
-        let width = boundaries.width - (BALL_RADIUS * 2);
-        let height = boundaries.height - ((BALL_RADIUS + boundaries.zoneHeight) * 2);
+        let innerWidth = boundaries.width - (BALL_RADIUS * 2);
+        let innerHeight = boundaries.height - ((BALL_RADIUS + boundaries.zoneHeight) * 2);
         let xMargin = BALL_RADIUS;
         let yMargin = BALL_RADIUS + boundaries.zoneHeight;
         let id = 0;
@@ -233,8 +241,8 @@ export class State {
         // add random balls and collectibles in the middle zone
         while (actors.length < numBalls + NUM_COLLECTIBLES) {
             let pos = new Vector(
-                Math.random() * width,
-                Math.random() * height
+                Math.random() * innerWidth,
+                Math.random() * innerHeight
             );
             // pad the position so that the balls are placed within the middle zone
             pos = pos.plus(new Vector(xMargin, yMargin));
@@ -258,7 +266,7 @@ export class State {
             )
         ));
 
-        return new State(actors, "playing");
+        return new State(actors, "playing", width, height);
     }
 }
 
@@ -329,10 +337,10 @@ class Ball {
         else if (this.color == "gold") return actorTypes.COLLECTIBLE;
     }
 
-    update(time) {
+    update(time, width, height) {
         let newPos = this.pos.plus(this.speed.times(time));
         let newSpeed = this.speed;
-        let boundaryInfo = touchesBoundary(newPos, this.radius);
+        let boundaryInfo = touchesBoundary(newPos, this.radius, width, height);
         let zone = touchesZone(newPos, this.radius);
 
         if (boundaryInfo.touches) {
@@ -361,7 +369,7 @@ class Player {
 
     get type() { return actorTypes.PLAYER; }
 
-    update(time, keys) {
+    update(time, keys, width, height) {
         let xSpeed = 0;
         if (keys.ArrowLeft) xSpeed -= PLAYER_SPEED;
         if (keys.ArrowRight) xSpeed += PLAYER_SPEED;
@@ -373,7 +381,7 @@ class Player {
         let speed = new Vector(xSpeed, ySpeed);
         let newPos = this.pos.plus(speed.times(time));
 
-        if (touchesBoundary(newPos, PLAYER_RADIUS).touches)
+        if (touchesBoundary(newPos, this.radius, width, height).touches)
             return new Player(this.pos);
         else
             return new Player(newPos);

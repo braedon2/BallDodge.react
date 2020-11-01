@@ -5,21 +5,15 @@ import { State } from './game-logic/BallDodge';
 import './index.css';
 
 const Game = () => {
-    const [state, setState] = useState(State.random(10));
-    const [viewPort, setViewPort] = useState(null);
-
-    useEffect(() => {
-        setViewPort({
-            height: window.innerHeight,
-            width: window.innerWidth
-        })
-    }, []);
+    const [state, setState] = useState(
+        State.random(15, window.innerWidth, window.innerHeight)
+    );
 
     useEffect(() => {
         let lastTime = null;
 
         const frameFunc = (time) => {
-            if (lastTime != null) {
+            if (lastTime !== null && state !== null) {
                 const timeStep = (time - lastTime) / 1000;
                 setState(prevState => prevState.update(timeStep, {}));
             }
@@ -36,17 +30,13 @@ const Game = () => {
         color: a.color
     }));
 
-    // don't render the game until the view port dimensions are known
-    if (!viewPort) {
-        return null;
-    }
-
     return (
         <GameStateDisplay 
-            width={viewPort.width} 
-            height={viewPort.height} 
+            width={state.width} 
+            height={state.height} 
             actors={drawableActors} />
     );
+    
 }
 
 const GameStateDisplay = ({width, height, actors }) => {
