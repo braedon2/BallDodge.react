@@ -1,8 +1,8 @@
 
 const NUM_COLLECTIBLES = 3;
 
-const BALL_RADIUS = 16;
-const BALL_SPEED = 60;
+const BALL_RADIUS = 32;
+const BALL_SPEED = 150;
 const BALL_COLOR = "black"
 const COLLECTIBLE_COLOR = "gold"
 
@@ -72,33 +72,6 @@ function touchesBoundary(pos, radius, width, height) {
     return {touches, side};
 }
 
-function touchesZone(pos, radius) {
-    let zone = [];
-    let y = pos.y; // zones span the entire width so we only care about y
-
-    // check if completely or partially in start zone
-    if ((y + radius) > (boundaries.height - boundaries.zoneHeight)) {
-        zone.push(zones.START)
-        if (y - radius < (boundaries.height - boundaries.zoneHeight))
-            zone.push(zones.MIDDLE)
-    }
-    // check if completely in middle zone
-    else if (
-        (y + radius) < (boundaries.height - boundaries.zoneHeight) &&
-        (y - radius) > boundaries.zoneHeigh
-    ) {
-        zone.push(zones.MIDDLE);
-    }
-    // check if completely or partially in finish zone
-    else if ((y - radius) < boundaries.zoneHeight) {
-        zone.push(zones.FINISH)
-        if ((y + radius) > boundaries.zoneHeight)
-            zone.push(zones.MIDDLE)
-    }
-
-    return zone;
-}
-
 class Vector {
     constructor(x, y) {
         this.x = x;
@@ -166,12 +139,7 @@ export class State {
     }
 
     isWon() {
-        let player = this.player;
-        let playerZone = touchesZone(player.pos, player.radius);
-
-        return playerZone.length == 1 &&
-            playerZone.includes(zones.FINISH) &&
-            !this.actors.some(actor => actor.type == actorTypes.COLLECTIBLE);
+        return false;
     }
 
     update(time, keys) {
@@ -341,18 +309,12 @@ class Ball {
         let newPos = this.pos.plus(this.speed.times(time));
         let newSpeed = this.speed;
         let boundaryInfo = touchesBoundary(newPos, this.radius, width, height);
-        let zone = touchesZone(newPos, this.radius);
 
         if (boundaryInfo.touches) {
             newPos = this.pos; 
-            // we only need to check the left and right of the global boundaries
             if (boundaryInfo.side.includes("left") || boundaryInfo.side.includes("right"))
                 newSpeed = newSpeed.invertX();
-        }
-        if (zone.length > 1) {
-            newPos = this.pos;
-            // balls cant enter the start and finish zones
-            if (zone.includes(zones.START) || zone.includes(zones.FINISH))
+            if (boundaryInfo.side.includes("top") || boundaryInfo.side.includes("bottom"))
                 newSpeed = newSpeed.invertY();
         }
 
