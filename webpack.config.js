@@ -28,4 +28,5 @@ module.exports = {
   devServer: {
     historyApiFallback: true, // added for routing
   },
+  devtool: 'source-map'
 };
