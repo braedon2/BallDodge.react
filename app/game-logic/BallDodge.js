@@ -198,39 +198,56 @@ export class State {
         );
     }
 
-    static random(numBalls, width, height) {
+    static random(numBalls, numCollectibles, width, height) {
         let actors = [];
-        let innerWidth = boundaries.width - (BALL_RADIUS * 2);
-        let innerHeight = boundaries.height - ((BALL_RADIUS + boundaries.zoneHeight) * 2);
-        let xMargin = BALL_RADIUS;
-        let yMargin = BALL_RADIUS + boundaries.zoneHeight;
-        let id = 0;
-
-        // add random balls and collectibles in the middle zone
-        while (actors.length < numBalls + NUM_COLLECTIBLES) {
-            let pos = new Vector(
-                Math.random() * innerWidth,
-                Math.random() * innerHeight
+        // the dimensions of the square around the player in which balls wont 
+        // generate
+        let centerBox = {width: 250, height: 250};
+        // returns true if the position lies within the center box
+        let inCenterBox = (pos) => {
+            return (
+                (pos.x > (width / 2) - (centerBox.width / 2)) &&
+                (pos.x < (width / 2) + (centerBox.width / 2)) &&
+                (pos.y > (height / 2) - (centerBox.height / 2)) &&
+                (pos.y < (height / 2) + (centerBox.height / 2))
             );
-            // pad the position so that the balls are placed within the middle zone
-            pos = pos.plus(new Vector(xMargin, yMargin));
-            let ball = new Ball(
-                pos,
-                new Vector(0, BALL_SPEED),
-                actors.length < numBalls ? BALL_COLOR : COLLECTIBLE_COLOR,
-                id
-            );
-            if (actors.some(b => overlap(b, ball)))
-                continue;
-            ball.speed = ball.speed.rotate(2 * Math.PI * Math.random());
-            actors.push(ball);
-            id += 1;
         }
 
+
+        while (actors.length < numBalls + numCollectibles) {
+            // the position is generated so that the ball is within the boundaries
+            // when its radius is taken into account.  
+            let pos = new Vector(
+                Math.random() * (width - (BALL_RADIUS * 2)),
+                Math.random() * (height - (BALL_RADIUS * 2))
+            );
+            pos = pos.plus(new Vector(BALL_RADIUS, BALL_RADIUS));
+
+            // skip if position lies within center box
+            if (inCenterBox(pos))
+                continue;
+
+            let ball = new Ball(
+                pos,
+                // easier to give each ball the same speed and then randomize the direction
+                new Vector(0, BALL_SPEED),
+                actors.length < numBalls ? BALL_COLOR : COLLECTIBLE_COLOR
+            );
+
+            if (actors.some(b => overlap(b, ball)))
+                continue;
+            
+            ball.speed = ball.speed.rotate(2 * Math.PI * Math.random());
+            actors.push(ball);
+        }
+
+        // put player in the middle. its guaranteed to not be touching any balls
+        // because each ball has been checked so that it is not within a box centered
+        // around this middle position
         actors.push(new Player(
             new Vector(
-                boundaries.width / 2,
-                boundaries.height - (PLAYER_RADIUS * 2)
+                width / 2,
+                height /2
             )
         ));
 
