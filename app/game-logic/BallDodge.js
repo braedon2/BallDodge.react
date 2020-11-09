@@ -3,7 +3,7 @@ const NUM_COLLECTIBLES = 3;
 
 const BALL_RADIUS = 32;
 const BALL_SPEED = 150;
-const BALL_COLOR = "black"
+const BALL_COLOR = "white"
 const COLLECTIBLE_COLOR = "gold"
 
 const PLAYER_RADIUS = 12;
@@ -33,22 +33,6 @@ const actorTypes = {
     PLAYER: "player",
     BALL: "ball",
     COLLECTIBLE: "collectible"
-}
-
-// global bindind that keeps track of which arrow keys are being pressed
-const arrowKeys = trackKeys(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
-
-function trackKeys(keys) {
-    let down = Object.create(null);
-    function track(event) {
-        if (keys.includes(event.key)) {
-            down[event.key] = event.type == "keydown";
-            event.preventDefault();
-        }
-    }
-    window.addEventListener("keydown", track);
-    window.addEventListener("keyup", track);
-    return down;
 }
   
 function touchesBoundary(pos, radius, width, height) {
