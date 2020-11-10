@@ -24,7 +24,6 @@ const useArrowKeys = () => {
             // prevents the page from scrolling
             e.preventDefault();
         }
-        console.log(arrowKeysRef.current)
     };
 
     useEffect(() => {
@@ -40,43 +39,69 @@ const useArrowKeys = () => {
 };
 
 const Game = () => {
-    // the viewports width and height are used for the dimensions of the 
-    // animated canvas. Passing them as the initial value to the state hook
-    // means the canvas wont change size when the window changes size after the
-    // game has started
-    const [state, setState] = useState(
-        State.random(15, 3, window.innerWidth, window.innerHeight)
-    );
+    // this state is used to be drawn and not for its update logic
+    const [stateView, setStateView] = useState(null);
+    // display the menu when the game is lost
+    const [lost, setLost] = useState(false);
+    // used as an instance variable so that it's up to date when accessed in 
+    // effects (or functions called in effects)
+    const stateRef = useRef();
     // this needs to be a ref so that its changes can be seen inside of frameFunc
     const arrowKeysRef = useArrowKeys();
 
-    useEffect(() => {
+    // animate the game until the player loses
+    const runGame = () => {
         let lastTime = null;
+        stateRef.current = State.random(15, 0, window.innerWidth, window.innerHeight);
+        setStateView(stateRef.current);
 
         const frameFunc = (time) => {
-            if (lastTime !== null && state !== null) {
+            if (lastTime !== null && stateRef.current !== null) {
                 const timeStep = (time - lastTime) / 1000;
-                setState(prevState => prevState.update(timeStep, arrowKeysRef.current));
+                // update the state
+                stateRef.current = stateRef.current.update(timeStep, arrowKeysRef.current);
+                // update the view with the new state
+                setStateView(stateRef.current);
             }
+
+            if (stateRef.current.status === "lost") {
+                setLost(true);
+                return;
+            }
+
             lastTime = time;
             requestAnimationFrame(frameFunc);
         }
 
         requestAnimationFrame(frameFunc);
-    }, [])
+    };
 
-    const drawableActors = state.actors.map(a => ({
-        pos: a.pos,
-        radius: a.radius,
-        color: a.color
-    }));
+    useEffect(() => {
+        runGame();
+    }, []);
+
+    // stateView is null on the first render
+    const drawableActors = stateView ? (
+            stateView.actors.map(a => ({
+            pos: a.pos,
+            radius: a.radius,
+            color: a.color
+        }))
+    ) : (
+        null
+    );
+
+    if (lost) {
+        return (
+            <h1>Lost :(</h1>
+        )
+    }
 
     return (
-        <GameStateDisplay 
-            width={state.width} 
-            height={state.height} 
+        stateView && !lost && <GameStateDisplay 
+            width={stateView.width} 
+            height={stateView.height} 
             actors={drawableActors} />
-        
     );
     
 }

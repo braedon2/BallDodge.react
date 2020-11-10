@@ -302,8 +302,8 @@ class Ball {
     }
 
     get type() { 
-        if (this.color == "black") return actorTypes.BALL;
-        else if (this.color == "gold") return actorTypes.COLLECTIBLE;
+        if (this.color == BALL_COLOR) return actorTypes.BALL;
+        else if (this.color == COLLECTIBLE_COLOR) return actorTypes.COLLECTIBLE;
     }
 
     update(time, width, height) {
